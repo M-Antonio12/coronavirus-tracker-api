@@ -1,7 +1,8 @@
 """app.routers.v1.py"""
 from fastapi import APIRouter
 
-from ..services.location.jhu import get_category
+
+from ..services.location.jhu_facade import get_category
 
 V1 = APIRouter()
 

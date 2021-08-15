@@ -1,4 +1,5 @@
 """app.routers.v2"""
+from abc import ABCMeta, abstractclassmethod
 import enum
 
 from fastapi import APIRouter, HTTPException, Request
@@ -18,6 +19,33 @@ class Sources(str, enum.Enum):
     CSBS = "csbs"
     NYT = "nyt"
 
+class IBuilder(metaclass=ABCMeta):
+    @staticmethod
+    @abstractclassmethod
+
+    def buildLatest():
+        "Display latest confirmed, deaths and recoverd"
+    def buildLocation():
+        "Display location"
+
+
+class Builder(IBuilder):
+   async def buildLatest(request: Request, source: Sources = Sources.JHU):
+        locations = await request.state.source.get_all()
+        return{
+          "latest": {
+            "confirmed": sum(map(lambda location: location.confirmed, locations)),
+            "deaths": sum(map(lambda location: location.deaths, locations)),
+            "recovered": sum(map(lambda location: location.recovered, locations)),
+          }
+        }
+
+   async def buildLocation( request: Request, timelines):
+        locations = await request.state.source.get_all()
+        return {
+             "locations": [location.serialize(timelines) for location in locations],
+        }
+        
 
 @V2.get("/latest", response_model=LatestResponse)
 async def get_latest(
@@ -26,13 +54,9 @@ async def get_latest(
     """
     Getting latest amount of total confirmed cases, deaths, and recoveries.
     """
-    locations = await request.state.source.get_all()
+
     return {
-        "latest": {
-            "confirmed": sum(map(lambda location: location.confirmed, locations)),
-            "deaths": sum(map(lambda location: location.deaths, locations)),
-            "recovered": sum(map(lambda location: location.recovered, locations)),
-        }
+        Builder.buildLatest()
     }
 
 
@@ -81,12 +105,7 @@ async def get_locations(
 
     # Return final serialized data.
     return {
-        "latest": {
-            "confirmed": sum(map(lambda location: location.confirmed, locations)),
-            "deaths": sum(map(lambda location: location.deaths, locations)),
-            "recovered": sum(map(lambda location: location.recovered, locations)),
-        },
-        "locations": [location.serialize(timelines) for location in locations],
+        Builder.buildLatest, Builder.buildLocation( request, timelines)
     }
 
 
