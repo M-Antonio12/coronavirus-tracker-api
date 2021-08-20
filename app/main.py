@@ -13,6 +13,8 @@ from fastapi.responses import JSONResponse
 from scout_apm.async_.starlette import ScoutMiddleware
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
+from app.utils import httputils
+
 from .config import get_settings
 from .data import data_source
 from .routers import V1, V2
@@ -112,7 +114,15 @@ async def handle_validation_error(
 # Include routers.
 APP.include_router(V1, prefix="", tags=["v1"])
 APP.include_router(V2, prefix="/v2", tags=["v2"])
-
+async def shutdown():
+    timer = 5000
+    state = "on"
+    timer = timer - 1
+    if(timer == 0):
+       state = "idle"
+    
+    if(state == "idle"):
+       httputils.teardown_client_session() 
 
 # Running of app.
 if __name__ == "__main__":
